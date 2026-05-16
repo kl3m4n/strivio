@@ -1,19 +1,19 @@
-import { ConvexQueryClient } from "@convex-dev/react-query";
-import { ConvexReactClient } from "convex/react";
-import { QueryClient } from "@tanstack/react-query";
-import { env } from "./env";
+import { ConvexQueryClient } from '@convex-dev/react-query'
+import { QueryClient } from '@tanstack/react-query'
+import { ConvexReactClient } from 'convex/react'
+import { env } from './env'
 
-const isServer = typeof window === "undefined";
+const isServer = typeof window === 'undefined'
 
-type Clients = { convex: ConvexReactClient; queryClient: QueryClient };
+type Clients = { convex: ConvexReactClient; queryClient: QueryClient }
 
-let browserClients: Clients | null = null;
+let browserClients: Clients | null = null
 
 function build(): Clients {
   const convex = new ConvexReactClient(env.convexUrl, {
     unsavedChangesWarning: false,
-  });
-  const convexQueryClient = new ConvexQueryClient(convex);
+  })
+  const convexQueryClient = new ConvexQueryClient(convex)
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -21,9 +21,9 @@ function build(): Clients {
         queryFn: convexQueryClient.queryFn(),
       },
     },
-  });
-  convexQueryClient.connect(queryClient);
-  return { convex, queryClient };
+  })
+  convexQueryClient.connect(queryClient)
+  return { convex, queryClient }
 }
 
 /**
@@ -35,7 +35,7 @@ function build(): Clients {
  * future auth state) never leak across users.
  */
 export function createClients(): Clients {
-  if (isServer) return build();
-  if (!browserClients) browserClients = build();
-  return browserClients;
+  if (isServer) return build()
+  if (!browserClients) browserClients = build()
+  return browserClients
 }

@@ -1,14 +1,13 @@
-import { betterAuth } from "better-auth";
-import { createClient, type GenericCtx } from "@convex-dev/better-auth";
-import { crossDomain } from "@convex-dev/better-auth/plugins";
+import { createClient, type GenericCtx } from '@convex-dev/better-auth'
+import { crossDomain } from '@convex-dev/better-auth/plugins'
+import { betterAuth } from 'better-auth'
 
-import { components } from "./_generated/api";
-import type { DataModel } from "./_generated/dataModel";
+import { components } from './_generated/api'
+import type { DataModel } from './_generated/dataModel'
 
-export const siteUrl = () =>
-  process.env.SITE_URL ?? "http://localhost:3000";
+export const siteUrl = () => process.env.SITE_URL ?? 'http://localhost:3000'
 
-export const authComponent = createClient<DataModel>(components.betterAuth);
+export const authComponent = createClient<DataModel>(components.betterAuth)
 
 // Roles live in our `members` table (see schema.ts / users.ts), keyed by
 // organization. The BetterAuth component's static validator rejects unknown
@@ -30,4 +29,4 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       autoSignIn: true,
     },
     plugins: [crossDomain({ siteUrl: siteUrl() })],
-  });
+  })

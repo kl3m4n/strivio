@@ -1,27 +1,21 @@
-import {
-  HeadContent,
-  Outlet,
-  Scripts,
-  createRootRouteWithContext,
-} from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import { Toaster } from "@/components/ui/sonner";
-
-import appCss from "../styles.css?url";
-import type { RouterAppContext } from "../router";
+import { TanStackDevtools } from '@tanstack/react-devtools'
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { Toaster } from '@/components/ui/sonner'
+import type { RouterAppContext } from '../router'
+import appCss from '../styles.css?url'
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Strivio" },
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'Strivio' },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [{ rel: 'stylesheet', href: appCss }],
   }),
   shellComponent: RootDocument,
-});
+})
 
 function RootDocument() {
   return (
@@ -33,10 +27,10 @@ function RootDocument() {
         <Outlet />
         <Toaster position="top-right" richColors />
         <TanStackDevtools
-          config={{ position: "bottom-right" }}
+          config={{ position: 'bottom-right' }}
           plugins={[
             {
-              name: "Tanstack Router",
+              name: 'Tanstack Router',
               render: <TanStackRouterDevtoolsPanel />,
             },
           ]}
@@ -44,5 +38,5 @@ function RootDocument() {
         <Scripts />
       </body>
     </html>
-  );
+  )
 }

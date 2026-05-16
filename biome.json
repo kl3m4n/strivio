@@ -14,6 +14,7 @@
       "!!**/.vinxi",
       "!!**/.vercel",
       "!!**/convex/_generated",
+      "!!**/routeTree.gen.ts",
       "!!ios",
       "!!android"
     ]

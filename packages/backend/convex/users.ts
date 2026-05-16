@@ -1,14 +1,9 @@
-import { v } from "convex/values";
-import { components, internal } from "./_generated/api";
-import {
-  internalAction,
-  internalMutation,
-  query,
-  type MutationCtx,
-} from "./_generated/server";
-import { createAuth } from "./auth";
+import { v } from 'convex/values'
+import { components, internal } from './_generated/api'
+import { internalAction, internalMutation, type MutationCtx, query } from './_generated/server'
+import { createAuth } from './auth'
 
-const ROLE = v.union(v.literal("owner"), v.literal("coach"));
+const ROLE = v.union(v.literal('owner'), v.literal('coach'))
 
 /**
  * True iff this BetterAuth user is a coach (owner or coach) of AT LEAST one
@@ -22,14 +17,12 @@ export const isCoach = query({
   returns: v.boolean(),
   handler: async (ctx, { userId }) => {
     const memberships = await ctx.db
-      .query("members")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
-    return memberships.some(
-      (m) => m.role === "owner" || m.role === "coach",
-    );
+      .query('members')
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
+      .collect()
+    return memberships.some((m) => m.role === 'owner' || m.role === 'coach')
   },
-});
+})
 
 /**
  * List the organizations the current user is a coach of.
@@ -39,7 +32,7 @@ export const myOrganizations = query({
   args: { userId: v.string() },
   returns: v.array(
     v.object({
-      organizationId: v.id("organizations"),
+      organizationId: v.id('organizations'),
       slug: v.string(),
       name: v.string(),
       role: ROLE,
@@ -47,23 +40,23 @@ export const myOrganizations = query({
   ),
   handler: async (ctx, { userId }) => {
     const memberships = await ctx.db
-      .query("members")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
-    const out = [];
+      .query('members')
+      .withIndex('by_userId', (q) => q.eq('userId', userId))
+      .collect()
+    const out = []
     for (const m of memberships) {
-      const org = await ctx.db.get(m.organizationId);
-      if (!org) continue;
+      const org = await ctx.db.get(m.organizationId)
+      if (!org) continue
       out.push({
         organizationId: org._id,
         slug: org.slug,
         name: org.name,
         role: m.role,
-      });
+      })
     }
-    return out;
+    return out
   },
-});
+})
 
 /**
  * Bootstrap: creates the first user, the first organization, and links them
@@ -88,22 +81,22 @@ export const seedFirstCoach = internalAction({
     organizationSlug: v.string(),
   },
   handler: async (ctx, args) => {
-    const auth = createAuth(ctx);
+    const auth = createAuth(ctx)
     await auth.api.signUpEmail({
       body: { email: args.email, password: args.password, name: args.name },
-    });
+    })
     await ctx.runMutation(internal.users._linkUserToOrgAsOwner, {
       email: args.email,
       organizationName: args.organizationName,
       organizationSlug: args.organizationSlug,
-    });
+    })
     return {
       email: args.email,
       organizationSlug: args.organizationSlug,
-      role: "owner" as const,
-    };
+      role: 'owner' as const,
+    }
   },
-});
+})
 
 /**
  * Add an EXISTING user as a coach of an existing organization.
@@ -116,22 +109,22 @@ export const seedFirstCoach = internalAction({
 export const addCoachToOrganization = internalMutation({
   args: { email: v.string(), organizationSlug: v.string() },
   handler: async (ctx, { email, organizationSlug }) => {
-    const userId = await findBetterAuthUserId(ctx, email);
+    const userId = await findBetterAuthUserId(ctx, email)
     const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_slug", (q) => q.eq("slug", organizationSlug))
-      .unique();
+      .query('organizations')
+      .withIndex('by_slug', (q) => q.eq('slug', organizationSlug))
+      .unique()
     if (!org) {
-      throw new Error(`No organization with slug: ${organizationSlug}`);
+      throw new Error(`No organization with slug: ${organizationSlug}`)
     }
     await upsertMembership(ctx, {
       organizationId: org._id,
       userId,
-      role: "coach",
-    });
-    return { email, organizationSlug, role: "coach" as const };
+      role: 'coach',
+    })
+    return { email, organizationSlug, role: 'coach' as const }
   },
-});
+})
 
 /**
  * Internal helper used by `seedFirstCoach` after the user is signed up.
@@ -144,63 +137,55 @@ export const _linkUserToOrgAsOwner = internalMutation({
     organizationSlug: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await findBetterAuthUserId(ctx, args.email);
+    const userId = await findBetterAuthUserId(ctx, args.email)
     const existingOrg = await ctx.db
-      .query("organizations")
-      .withIndex("by_slug", (q) => q.eq("slug", args.organizationSlug))
-      .unique();
+      .query('organizations')
+      .withIndex('by_slug', (q) => q.eq('slug', args.organizationSlug))
+      .unique()
     const organizationId =
       existingOrg?._id ??
-      (await ctx.db.insert("organizations", {
+      (await ctx.db.insert('organizations', {
         name: args.organizationName,
         slug: args.organizationSlug,
         createdAt: Date.now(),
-      }));
+      }))
     await upsertMembership(ctx, {
       organizationId,
       userId,
-      role: "owner",
-    });
-    return { userId, organizationId, role: "owner" as const };
+      role: 'owner',
+    })
+    return { userId, organizationId, role: 'owner' as const }
   },
-});
+})
 
 // --- helpers ---------------------------------------------------------------
 
-async function findBetterAuthUserId(
-  ctx: MutationCtx,
-  email: string,
-): Promise<string> {
-  const authUser = await ctx.runQuery(
-    components.betterAuth.adapter.findOne,
-    {
-      model: "user",
-      where: [{ field: "email", operator: "eq", value: email }],
-    },
-  );
+async function findBetterAuthUserId(ctx: MutationCtx, email: string): Promise<string> {
+  const authUser = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+    model: 'user',
+    where: [{ field: 'email', operator: 'eq', value: email }],
+  })
   if (!authUser) {
-    throw new Error(`No BetterAuth user found for email: ${email}`);
+    throw new Error(`No BetterAuth user found for email: ${email}`)
   }
-  return authUser._id as string;
+  return authUser._id as string
 }
 
 async function upsertMembership(
   ctx: MutationCtx,
   args: {
-    organizationId: import("./_generated/dataModel").Id<"organizations">;
-    userId: string;
-    role: "owner" | "coach";
+    organizationId: import('./_generated/dataModel').Id<'organizations'>
+    userId: string
+    role: 'owner' | 'coach'
   },
 ) {
   const existing = await ctx.db
-    .query("members")
-    .withIndex("by_user_org", (q) =>
-      q.eq("userId", args.userId).eq("organizationId", args.organizationId),
-    )
-    .unique();
+    .query('members')
+    .withIndex('by_user_org', (q) => q.eq('userId', args.userId).eq('organizationId', args.organizationId))
+    .unique()
   if (existing) {
-    await ctx.db.patch(existing._id, { role: args.role });
+    await ctx.db.patch(existing._id, { role: args.role })
   } else {
-    await ctx.db.insert("members", { ...args, createdAt: Date.now() });
+    await ctx.db.insert('members', { ...args, createdAt: Date.now() })
   }
 }

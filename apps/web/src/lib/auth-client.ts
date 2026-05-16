@@ -1,9 +1,6 @@
-import { createAuthClient } from "better-auth/react";
-import {
-  convexClient,
-  crossDomainClient,
-} from "@convex-dev/better-auth/client/plugins";
-import { env } from "./env";
+import { convexClient, crossDomainClient } from '@convex-dev/better-auth/client/plugins'
+import { createAuthClient } from 'better-auth/react'
+import { env } from './env'
 
 // The BetterAuth client talks to the Convex HTTP routes registered in
 // `packages/backend/convex/http.ts` — the `*.convex.site` host (or
@@ -14,6 +11,6 @@ import { env } from "./env";
 export const authClient = createAuthClient({
   baseURL: env.convexSiteUrl,
   plugins: [convexClient(), crossDomainClient()],
-});
+})
 
-export const { useSession, signIn, signUp, signOut } = authClient;
+export const { useSession, signIn, signUp, signOut } = authClient
