@@ -1,0 +1,28 @@
+{
+  "name": "strivio",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n web,convex -c blue,green 'bun run dev:web' 'bun run dev:backend'",
+    "dev:web": "bun run --filter @strivio/web dev",
+    "dev:backend": "bun run --filter @strivio/backend dev",
+    "typecheck": "bun run --filter '*' typecheck",
+    "build": "bun run --filter '*' build",
+    "format": "biome format --write",
+    "lint": "biome lint",
+    "check": "biome check",
+    "check:fix": "biome check --write"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "concurrently": "^9.1.2",
+    "typescript": "5.6.3"
+  },
+  "dependencies": {
+    "@types/node": "^25.8.0"
+  }
+}

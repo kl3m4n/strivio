@@ -1,0 +1,31 @@
+{
+  "name": "@strivio/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./convex/_generated/api.js",
+  "types": "./convex/_generated/api.d.ts",
+  "exports": {
+    "./api": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./auth": {
+      "types": "./convex/auth.ts",
+      "default": "./convex/auth.ts"
+    }
+  },
+  "scripts": {
+    "dev": "npx convex dev",
+    "deploy": "npx convex deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@convex-dev/better-auth": "0.12.2",
+    "better-auth": "1.6.9",
+    "convex": "1.39.1"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3"
+  }
+}
