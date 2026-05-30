@@ -13,6 +13,10 @@
     "./auth": {
       "types": "./convex/auth.ts",
       "default": "./convex/auth.ts"
+    },
+    "./dataModel": {
+      "types": "./convex/_generated/dataModel.d.ts",
+      "default": "./convex/_generated/dataModel.js"
     }
   },
   "scripts": {
@@ -22,6 +26,7 @@
   },
   "dependencies": {
     "@convex-dev/better-auth": "0.12.2",
+    "@strivio/shared": "workspace:*",
     "better-auth": "1.6.9",
     "convex": "1.39.1"
   },

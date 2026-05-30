@@ -8,6 +8,10 @@ import { defineConfig } from 'vite'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
+  ssr: {
+    // Required so SSR can resolve @convex-dev/better-auth's deep imports.
+    noExternal: ['@convex-dev/better-auth'],
+  },
   plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
 })
 

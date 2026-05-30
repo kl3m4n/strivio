@@ -1,16 +1,11 @@
-import { convexClient, crossDomainClient } from '@convex-dev/better-auth/client/plugins'
+import { convexClient } from '@convex-dev/better-auth/client/plugins'
 import { createAuthClient } from 'better-auth/react'
-import { env } from './env'
 
-// The BetterAuth client talks to the Convex HTTP routes registered in
-// `packages/backend/convex/http.ts` — the `*.convex.site` host (or
-// `localhost:3211` in local dev). Because that's a different origin from
-// the web app, the `crossDomainClient` plugin replaces cookie-based session
-// transport with a localStorage-stored `Better-Auth-Cookie` header. The
-// matching server-side `crossDomain` plugin lives in `convex/auth.ts`.
+// No baseURL: requests go to the same origin as the web (default), then
+// are proxied to Convex by the `/api/auth/$` route. Cookies are HTTP-only
+// and same-origin — no `crossDomainClient` plugin needed.
 export const authClient = createAuthClient({
-  baseURL: env.convexSiteUrl,
-  plugins: [convexClient(), crossDomainClient()],
+  plugins: [convexClient()],
 })
 
 export const { useSession, signIn, signUp, signOut } = authClient

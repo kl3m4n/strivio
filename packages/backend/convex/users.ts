@@ -1,35 +1,83 @@
 import { v } from 'convex/values'
 import { components, internal } from './_generated/api'
-import { internalAction, internalMutation, type MutationCtx, query } from './_generated/server'
-import { createAuth } from './auth'
+import type { Doc, Id } from './_generated/dataModel'
+import { internalAction, internalMutation, type MutationCtx, type QueryCtx, query } from './_generated/server'
+import { authComponent, createAuth } from './auth'
 
 const ROLE = v.union(v.literal('owner'), v.literal('coach'))
 
+// --- Auth helpers (server-side only) -------------------------------------
+
 /**
- * True iff this BetterAuth user is a coach (owner or coach) of AT LEAST one
- * organization. Used by the web's `/dashboard` loader.
+ * Resolves the current user, looks up their membership in `organizationId`,
+ * and returns both. Throws if the user is not authenticated or not a member.
  *
- * Public on purpose: the caller has the userId from the BetterAuth session.
- * The result is just a boolean. Tighten with Convex auth identity later.
+ * Every program/day/block mutation in phase 2 goes through this guard —
+ * the web route guards are UX confort, this is the security barrier.
+ */
+export async function requireOrgMember(
+  ctx: QueryCtx | MutationCtx,
+  organizationId: Id<'organizations'>,
+): Promise<{ user: Awaited<ReturnType<typeof authComponent.safeGetAuthUser>>; member: Doc<'members'> }> {
+  const user = await authComponent.safeGetAuthUser(ctx)
+  if (!user) {
+    throw new Error('UNAUTHENTICATED')
+  }
+  const member = await ctx.db
+    .query('members')
+    .withIndex('by_user_org', (q) => q.eq('userId', user._id as string).eq('organizationId', organizationId))
+    .unique()
+  if (!member) {
+    throw new Error('NOT_A_MEMBER_OF_ORGANIZATION')
+  }
+  return { user, member }
+}
+
+// --- Public queries ------------------------------------------------------
+
+/** Current user from auth identity, or null. Doesn't throw. */
+export const me = query({
+  args: {},
+  returns: v.union(
+    v.null(),
+    v.object({
+      id: v.string(),
+      email: v.string(),
+      name: v.union(v.null(), v.string()),
+    }),
+  ),
+  handler: async (ctx) => {
+    const user = await authComponent.safeGetAuthUser(ctx)
+    if (!user) return null
+    return {
+      id: user._id as string,
+      email: user.email as string,
+      name: ((user.name as string | undefined) ?? null) as string | null,
+    }
+  },
+})
+
+/**
+ * True iff the current user is a member of at least one organization with
+ * role "owner" or "coach". Reads identity server-side — no args.
  */
 export const isCoach = query({
-  args: { userId: v.string() },
+  args: {},
   returns: v.boolean(),
-  handler: async (ctx, { userId }) => {
+  handler: async (ctx) => {
+    const user = await authComponent.safeGetAuthUser(ctx)
+    if (!user) return false
     const memberships = await ctx.db
       .query('members')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
+      .withIndex('by_userId', (q) => q.eq('userId', user._id as string))
       .collect()
     return memberships.some((m) => m.role === 'owner' || m.role === 'coach')
   },
 })
 
-/**
- * List the organizations the current user is a coach of.
- * Returned shape is small and stable for the web app to render menus.
- */
+/** Organizations (programmations) the current user is a coach/owner of. */
 export const myOrganizations = query({
-  args: { userId: v.string() },
+  args: {},
   returns: v.array(
     v.object({
       organizationId: v.id('organizations'),
@@ -38,12 +86,19 @@ export const myOrganizations = query({
       role: ROLE,
     }),
   ),
-  handler: async (ctx, { userId }) => {
+  handler: async (ctx) => {
+    const user = await authComponent.safeGetAuthUser(ctx)
+    if (!user) return []
     const memberships = await ctx.db
       .query('members')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
+      .withIndex('by_userId', (q) => q.eq('userId', user._id as string))
       .collect()
-    const out = []
+    const out: Array<{
+      organizationId: Id<'organizations'>
+      slug: string
+      name: string
+      role: 'owner' | 'coach'
+    }> = []
     for (const m of memberships) {
       const org = await ctx.db.get(m.organizationId)
       if (!org) continue
@@ -58,19 +113,11 @@ export const myOrganizations = query({
   },
 })
 
+// --- Bootstrap / admin mutations -----------------------------------------
+
 /**
- * Bootstrap: creates the first user, the first organization, and links them
- * as owner. Run ONCE from the Convex dashboard:
- *
- *   internal.users.seedFirstCoach({
- *     email: "coach@example.com",
- *     password: "supersecret123",
- *     name: "Coach Demo",
- *     organizationName: "HWPO",
- *     organizationSlug: "hwpo"
- *   })
- *
- * No signup UI in the MVP.
+ * Bootstrap: creates the first user + the first organization + the owner
+ * membership. Run ONCE from the Convex dashboard.
  */
 export const seedFirstCoach = internalAction({
   args: {
@@ -98,14 +145,7 @@ export const seedFirstCoach = internalAction({
   },
 })
 
-/**
- * Add an EXISTING user as a coach of an existing organization.
- *
- *   internal.users.addCoachToOrganization({
- *     email: "coach2@example.com",
- *     organizationSlug: "hwpo"
- *   })
- */
+/** Add an EXISTING user as coach of an existing organization. */
 export const addCoachToOrganization = internalMutation({
   args: { email: v.string(), organizationSlug: v.string() },
   handler: async (ctx, { email, organizationSlug }) => {
@@ -126,10 +166,7 @@ export const addCoachToOrganization = internalMutation({
   },
 })
 
-/**
- * Internal helper used by `seedFirstCoach` after the user is signed up.
- * Creates the org (idempotent on slug) and makes the user its owner.
- */
+/** Internal: split out so `seedFirstCoach` (an action) can call it. */
 export const _linkUserToOrgAsOwner = internalMutation({
   args: {
     email: v.string(),
@@ -158,7 +195,7 @@ export const _linkUserToOrgAsOwner = internalMutation({
   },
 })
 
-// --- helpers ---------------------------------------------------------------
+// --- Private DB helpers --------------------------------------------------
 
 async function findBetterAuthUserId(ctx: MutationCtx, email: string): Promise<string> {
   const authUser = await ctx.runQuery(components.betterAuth.adapter.findOne, {
@@ -174,7 +211,7 @@ async function findBetterAuthUserId(ctx: MutationCtx, email: string): Promise<st
 async function upsertMembership(
   ctx: MutationCtx,
   args: {
-    organizationId: import('./_generated/dataModel').Id<'organizations'>
+    organizationId: Id<'organizations'>
     userId: string
     role: 'owner' | 'coach'
   },

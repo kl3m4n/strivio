@@ -1,19 +1,26 @@
 import { ConvexQueryClient } from '@convex-dev/react-query'
 import { QueryClient } from '@tanstack/react-query'
-import { ConvexReactClient } from 'convex/react'
 import { env } from './env'
 
 const isServer = typeof window === 'undefined'
 
-type Clients = { convex: ConvexReactClient; queryClient: QueryClient }
+type Clients = {
+  convexQueryClient: ConvexQueryClient
+  queryClient: QueryClient
+}
 
 let browserClients: Clients | null = null
 
 function build(): Clients {
-  const convex = new ConvexReactClient(env.convexUrl, {
+  // ConvexQueryClient now accepts the URL directly and instantiates a
+  // ConvexReactClient + a ConvexHttpClient (for SSR) internally.
+  // `expectAuth: true` makes it wait for `setAuth(...)` before issuing
+  // authenticated queries — the SSR root sets the token via getAuth(),
+  // and the client side gets it from <ConvexBetterAuthProvider>.
+  const convexQueryClient = new ConvexQueryClient(env.convexUrl, {
+    expectAuth: true,
     unsavedChangesWarning: false,
   })
-  const convexQueryClient = new ConvexQueryClient(convex)
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -23,16 +30,12 @@ function build(): Clients {
     },
   })
   convexQueryClient.connect(queryClient)
-  return { convex, queryClient }
+  return { convexQueryClient, queryClient }
 }
 
 /**
- * Browser side : single shared instance for the whole tab lifetime. Avoids
- *   - opening N WebSockets when TanStack Start re-instantiates the router
- *   - splitting the React Query cache between navigations
- *
- * Server side (SSR) : fresh per request so the React Query cache (and any
- * future auth state) never leak across users.
+ * Browser: single shared instance for the whole tab lifetime.
+ * SSR: fresh per request so caches and auth state never leak across users.
  */
 export function createClients(): Clients {
   if (isServer) return build()

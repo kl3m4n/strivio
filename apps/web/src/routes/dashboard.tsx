@@ -1,60 +1,37 @@
 import { convexQuery } from '@convex-dev/react-query'
 import { api } from '@strivio/backend/api'
-import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-router'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { authClient } from '@/lib/auth-client'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { Topbar } from '@/components/dashboard/topbar'
 
 export const Route = createFileRoute('/dashboard')({
-  // Auth check needs the cookie/localStorage + browser-side BetterAuth client.
-  ssr: false,
   beforeLoad: async ({ context }) => {
-    const { data: session, error } = await authClient.getSession()
-    if (error || !session?.user) {
+    const me = await context.queryClient.fetchQuery(convexQuery(api.users.me, {}))
+    if (!me) {
       throw redirect({ to: '/login' })
     }
-    const isCoach = await context.queryClient.fetchQuery(convexQuery(api.users.isCoach, { userId: session.user.id }))
-    if (!isCoach) {
+    const organizations = await context.queryClient.fetchQuery(convexQuery(api.users.myOrganizations, {}))
+    if (organizations.length === 0) {
+      // User is logged in but not a coach of any org → not allowed here.
       throw redirect({ to: '/' })
     }
-    return {
-      user: {
-        email: session.user.email,
-        name: session.user.name ?? null,
-      },
-    }
+    // MVP : single programmation. On expose la première directement.
+    return { user: me, organization: organizations[0] }
   },
-  loader: ({ context }) => ({ user: context.user }),
-  component: Dashboard,
+  loader: ({ context }) => ({
+    user: context.user,
+    organization: context.organization,
+  }),
+  component: DashboardLayout,
 })
 
-function Dashboard() {
-  const { user } = Route.useLoaderData()
-  const router = useRouter()
-
-  const handleSignOut = async () => {
-    await authClient.signOut()
-    toast.success('Déconnecté')
-    void router.navigate({ to: '/' })
-  }
-
+function DashboardLayout() {
+  const { user, organization } = Route.useLoaderData()
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-6 px-8 py-16">
-      <Card>
-        <CardHeader>
-          <CardTitle>Bienvenue, coach {user.name ?? user.email}</CardTitle>
-          <CardDescription>Espace coach — gestion des programmes à venir.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex gap-3">
-          <Button asChild variant="secondary">
-            <Link to="/">Accueil</Link>
-          </Button>
-          <Button onClick={handleSignOut} variant="outline">
-            Se déconnecter
-          </Button>
-        </CardContent>
-      </Card>
-    </main>
+    <div className="flex h-screen flex-col bg-muted/30">
+      <Topbar user={user} organizationName={organization.name} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Outlet />
+      </div>
+    </div>
   )
 }

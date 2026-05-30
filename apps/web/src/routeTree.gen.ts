@@ -12,6 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
+import { Route as DashboardProgramsProgramIdRouteImport } from './routes/dashboard/programs.$programId'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as DashboardProgramsProgramIdIndexRouteImport } from './routes/dashboard/programs.$programId.index'
+import { Route as DashboardProgramsProgramIdSettingsRouteImport } from './routes/dashboard/programs.$programId.settings'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -28,35 +33,100 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardProgramsProgramIdRoute =
+  DashboardProgramsProgramIdRouteImport.update({
+    id: '/programs/$programId',
+    path: '/programs/$programId',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardProgramsProgramIdIndexRoute =
+  DashboardProgramsProgramIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardProgramsProgramIdRoute,
+  } as any)
+const DashboardProgramsProgramIdSettingsRoute =
+  DashboardProgramsProgramIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => DashboardProgramsProgramIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/programs/$programId': typeof DashboardProgramsProgramIdRouteWithChildren
+  '/dashboard/programs/$programId/settings': typeof DashboardProgramsProgramIdSettingsRoute
+  '/dashboard/programs/$programId/': typeof DashboardProgramsProgramIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/programs/$programId/settings': typeof DashboardProgramsProgramIdSettingsRoute
+  '/dashboard/programs/$programId': typeof DashboardProgramsProgramIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/login': typeof LoginRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/programs/$programId': typeof DashboardProgramsProgramIdRouteWithChildren
+  '/dashboard/programs/$programId/settings': typeof DashboardProgramsProgramIdSettingsRoute
+  '/dashboard/programs/$programId/': typeof DashboardProgramsProgramIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/dashboard/'
+    | '/api/auth/$'
+    | '/dashboard/programs/$programId'
+    | '/dashboard/programs/$programId/settings'
+    | '/dashboard/programs/$programId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/api/auth/$'
+    | '/dashboard/programs/$programId/settings'
+    | '/dashboard/programs/$programId'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/dashboard/'
+    | '/api/auth/$'
+    | '/dashboard/programs/$programId'
+    | '/dashboard/programs/$programId/settings'
+    | '/dashboard/programs/$programId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,13 +152,80 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/programs/$programId': {
+      id: '/dashboard/programs/$programId'
+      path: '/programs/$programId'
+      fullPath: '/dashboard/programs/$programId'
+      preLoaderRoute: typeof DashboardProgramsProgramIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/programs/$programId/': {
+      id: '/dashboard/programs/$programId/'
+      path: '/'
+      fullPath: '/dashboard/programs/$programId/'
+      preLoaderRoute: typeof DashboardProgramsProgramIdIndexRouteImport
+      parentRoute: typeof DashboardProgramsProgramIdRoute
+    }
+    '/dashboard/programs/$programId/settings': {
+      id: '/dashboard/programs/$programId/settings'
+      path: '/settings'
+      fullPath: '/dashboard/programs/$programId/settings'
+      preLoaderRoute: typeof DashboardProgramsProgramIdSettingsRouteImport
+      parentRoute: typeof DashboardProgramsProgramIdRoute
+    }
   }
 }
 
+interface DashboardProgramsProgramIdRouteChildren {
+  DashboardProgramsProgramIdSettingsRoute: typeof DashboardProgramsProgramIdSettingsRoute
+  DashboardProgramsProgramIdIndexRoute: typeof DashboardProgramsProgramIdIndexRoute
+}
+
+const DashboardProgramsProgramIdRouteChildren: DashboardProgramsProgramIdRouteChildren =
+  {
+    DashboardProgramsProgramIdSettingsRoute:
+      DashboardProgramsProgramIdSettingsRoute,
+    DashboardProgramsProgramIdIndexRoute: DashboardProgramsProgramIdIndexRoute,
+  }
+
+const DashboardProgramsProgramIdRouteWithChildren =
+  DashboardProgramsProgramIdRoute._addFileChildren(
+    DashboardProgramsProgramIdRouteChildren,
+  )
+
+interface DashboardRouteChildren {
+  DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardProgramsProgramIdRoute: typeof DashboardProgramsProgramIdRouteWithChildren
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardIndexRoute: DashboardIndexRoute,
+  DashboardProgramsProgramIdRoute: DashboardProgramsProgramIdRouteWithChildren,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

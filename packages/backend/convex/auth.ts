@@ -1,9 +1,10 @@
 import { createClient, type GenericCtx } from '@convex-dev/better-auth'
-import { crossDomain } from '@convex-dev/better-auth/plugins'
+import { convex } from '@convex-dev/better-auth/plugins'
 import { betterAuth } from 'better-auth'
 
 import { components } from './_generated/api'
 import type { DataModel } from './_generated/dataModel'
+import authConfig from './auth.config'
 
 export const siteUrl = () => process.env.SITE_URL ?? 'http://localhost:3000'
 
@@ -14,12 +15,10 @@ export const authComponent = createClient<DataModel>(components.betterAuth)
 // user-table fields, so we don't try to put role-related data on the
 // BetterAuth user.
 //
-// `crossDomain` is REQUIRED: the BetterAuth API runs on the Convex `.site`
-// origin while the web runs on `localhost:3000`. Browsers won't propagate
-// session cookies across origins on http; the plugin instead echoes the
-// session token via the `Set-Better-Auth-Cookie` response header and the
-// matching `crossDomainClient` plugin (web side) restores it on every
-// request as a `Better-Auth-Cookie` header.
+// The `convex` plugin issues JWTs that the Convex client uses to populate
+// `ctx.auth.getUserIdentity()` in queries/mutations. Auth requests reach
+// here via the same-origin proxy (`apps/web/src/routes/api/auth/$.ts`), so
+// cookies are HTTP-only and same-origin — no cross-domain plumbing needed.
 export const createAuth = (ctx: GenericCtx<DataModel>) =>
   betterAuth({
     baseURL: siteUrl(),
@@ -28,5 +27,5 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       enabled: true,
       autoSignIn: true,
     },
-    plugins: [crossDomain({ siteUrl: siteUrl() })],
+    plugins: [convex({ authConfig })],
   })
