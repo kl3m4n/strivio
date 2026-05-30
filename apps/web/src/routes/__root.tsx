@@ -25,12 +25,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
-  beforeLoad: async ({ context }) => {
-    const token = await getAuth()
-    if (token) {
-      context.convexQueryClient.serverHttpClient?.setAuth(token)
-    }
-    return { token: token ?? null }
+  beforeLoad: async () => {
+    // DEBUG: getAuth() neutralisé
+    return { token: null }
   },
   shellComponent: RootDocument,
 })
@@ -44,9 +41,8 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
-        <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient} initialToken={token}>
-          <Outlet />
-        </ConvexBetterAuthProvider>
+        {/* DEBUG: provider bypassé */}
+        <Outlet />
         <Toaster position="top-right" richColors />
         <TanStackDevtools
           config={{ position: 'bottom-right' }}
