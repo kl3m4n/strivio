@@ -5,6 +5,7 @@ node_modules
 dist
 out
 .output
+.vercel
 .tanstack
 .vinxi
 build
