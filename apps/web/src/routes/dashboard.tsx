@@ -5,6 +5,10 @@ import { Topbar } from '@/components/dashboard/topbar'
 
 export const Route = createFileRoute('/dashboard')({
   beforeLoad: async ({ context }) => {
+    if (!context.isAuthenticated) {
+      throw redirect({ to: '/login' })
+    }
+
     const me = await context.queryClient.fetchQuery(convexQuery(api.users.me, {}))
     if (!me) {
       throw redirect({ to: '/login' })

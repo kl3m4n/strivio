@@ -8,6 +8,8 @@ import { routeTree } from './routeTree.gen'
 export interface RouterAppContext {
   convexQueryClient: ConvexQueryClient
   queryClient: QueryClient
+  isAuthenticated?: boolean
+  token?: string
 }
 
 export function getRouter() {
