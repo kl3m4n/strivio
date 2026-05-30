@@ -30,8 +30,14 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 *.tsbuildinfo
 .vite
 
-# convex generated
-**/convex/_generated
+# convex/_generated : VERSIONNÉ volontairement (monorepo).
+# La convention "gitignore _generated" vaut pour un projet mono-package où
+# convex/ et le frontend cohabitent. Ici apps/web est un package séparé qui
+# importe @strivio/backend/api -> packages/backend/convex/_generated/api.js :
+# le bundler doit pouvoir les résoudre au build (notamment sur Vercel), donc
+# ils doivent être dans le repo. C'est ce que fait le template monorepo
+# officiel de Convex. Régénérés par `convex dev` — committe-les si le schéma
+# change.
 
 # editor / OS
 .idea
