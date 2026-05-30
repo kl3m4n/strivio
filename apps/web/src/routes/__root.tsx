@@ -10,8 +10,33 @@ import { getToken } from '@/lib/auth-server'
 import type { RouterAppContext } from '../router'
 import appCss from '../styles.css?url'
 
-const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
-  return await getToken()
+function isMissingSessionError(error: unknown) {
+  if (!(error instanceof Error)) return false
+  const maybeStatus = 'status' in error ? error.status : undefined
+  const maybeCause = 'cause' in error ? error.cause : undefined
+  const maybeCode =
+    typeof maybeCause === 'object' && maybeCause !== null && 'code' in maybeCause ? maybeCause.code : undefined
+
+  return maybeStatus === 401 || maybeCode === 'UNAUTHORIZED'
+}
+
+const getAuth = createServerFn({ method: 'GET' }).handler(async (ctx) => {
+  const { request } = ctx as typeof ctx & { request: Request }
+  const { getSessionCookie } = await import('better-auth/cookies')
+  const headers = new Headers(request.headers)
+
+  if (!getSessionCookie(headers)) {
+    return undefined
+  }
+
+  try {
+    return await getToken()
+  } catch (error) {
+    if (isMissingSessionError(error)) {
+      return undefined
+    }
+    throw error
+  }
 })
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
