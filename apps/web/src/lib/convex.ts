@@ -12,11 +12,8 @@ type Clients = {
 let browserClients: Clients | null = null
 
 function build(): Clients {
-  // ConvexQueryClient now accepts the URL directly and instantiates a
-  // ConvexReactClient + a ConvexHttpClient (for SSR) internally.
-  // `expectAuth: true` makes it wait for `setAuth(...)` before issuing
-  // authenticated queries — the SSR root sets the token via getAuth(),
-  // and the client side gets it from <ConvexBetterAuthProvider>.
+  // `expectAuth: true` keeps browser queries from racing before BetterAuth has
+  // installed the Convex token. SSR gets its token in the root beforeLoad.
   const convexQueryClient = new ConvexQueryClient(env.convexUrl, {
     expectAuth: true,
     unsavedChangesWarning: false,

@@ -9,9 +9,6 @@ import { getToken } from '@/lib/auth-server'
 import type { RouterAppContext } from '../router'
 import appCss from '../styles.css?url'
 
-// Read the BetterAuth JWT from request cookies on the server. The token
-// is then pushed into both the SSR HTTP client (so loaders can run authed
-// queries during SSR) and the React provider (for browser hydration).
 const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
   return await getToken()
 })
@@ -25,24 +22,29 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
-  beforeLoad: async () => {
-    // DEBUG: getAuth() neutralisé
-    return { token: null }
+  beforeLoad: async ({ context }) => {
+    const token = await getAuth()
+    if (token) {
+      context.convexQueryClient.serverHttpClient?.setAuth(token)
+    } else {
+      context.convexQueryClient.serverHttpClient?.clearAuth()
+    }
+    return { token }
   },
   shellComponent: RootDocument,
 })
 
 function RootDocument() {
-  const { token } = useRouteContext({ from: Route.id })
-  const { convexQueryClient } = useRouteContext({ from: Route.id })
+  const { convexQueryClient, token } = useRouteContext({ from: Route.id })
   return (
     <html lang="fr">
       <head>
         <HeadContent />
       </head>
       <body>
-        {/* DEBUG: provider bypassé */}
-        <Outlet />
+        <ConvexBetterAuthProvider client={convexQueryClient.convexClient} authClient={authClient} initialToken={token}>
+          <Outlet />
+        </ConvexBetterAuthProvider>
         <Toaster position="top-right" richColors />
         <TanStackDevtools
           config={{ position: 'bottom-right' }}

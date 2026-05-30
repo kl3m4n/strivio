@@ -1,16 +1,12 @@
 import { convexBetterAuthReactStart } from '@convex-dev/better-auth/react-start'
 import { env } from './env'
 
-// `handler` is the proxy mounted at /api/auth/$ — it forwards every
-// BetterAuth request to the Convex `.site` host while keeping the browser's
-// origin pinned to the web app. That's what makes cookies same-origin.
+// `handler` is the same-origin proxy mounted at /api/auth/$. It forwards
+// BetterAuth requests to the Convex `.site` host while keeping cookies on the
+// web app origin.
 //
-// `getToken` reads the JWT from the request cookies on the server, so SSR
-// loaders can make authenticated Convex calls.
-//
-// `fetchAuthQuery / fetchAuthMutation / fetchAuthAction` are sugar for
-// authenticated server-side Convex calls; not used in phase 2 but handy
-// later.
+// `getToken` reads the BetterAuth cookie from the current TanStack Start
+// request and exchanges it for the Convex JWT used by SSR loaders.
 export const { handler, getToken, fetchAuthQuery, fetchAuthMutation, fetchAuthAction } = convexBetterAuthReactStart({
   convexUrl: env.convexUrl,
   convexSiteUrl: env.convexSiteUrl,
