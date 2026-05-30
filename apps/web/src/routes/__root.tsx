@@ -5,12 +5,12 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { createServerFn } from '@tanstack/react-start'
 import { Toaster } from '@/components/ui/sonner'
 import { authClient } from '@/lib/auth-client'
-import { getTokenForSsr } from '@/lib/auth-server'
+import { getToken } from '@/lib/auth-server'
 import type { RouterAppContext } from '../router'
 import appCss from '../styles.css?url'
 
 const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
-  return await getTokenForSsr()
+  return await getToken()
 })
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
