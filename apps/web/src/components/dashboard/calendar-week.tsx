@@ -2,6 +2,7 @@ import type { Id } from '@strivio/backend/dataModel'
 import type { BlockColor } from '@strivio/shared'
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Plus } from 'lucide-react'
 import { useState } from 'react'
+import { MarkdownPreview } from '@/components/dashboard/markdown-preview'
 import { Button } from '@/components/ui/button'
 import { BLOCK_COLOR_CLASSES } from '@/lib/block-colors'
 import { addDays, DAY_LABELS_FR, isSameDay, MONTH_LABELS_FR, startOfWeek, toIsoDate, weekDates } from '@/lib/date'
@@ -218,78 +219,56 @@ function BlockCard({
   onMoveDown: (e: React.MouseEvent) => void
 }) {
   const cls = BLOCK_COLOR_CLASSES[block.color]
-  const preview = stripMarkdown(block.contentMarkdown)
+  const hasContent = block.contentMarkdown.trim().length > 0
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group flex flex-col gap-1 rounded border bg-background p-2 text-left transition hover:shadow-sm ${cls.badge}`}
+    <div
+      className={`group relative flex flex-col gap-1 rounded border bg-background p-2 text-left transition hover:shadow-sm ${cls.badge}`}
     >
-      <div className="flex items-start justify-between gap-1">
-        <div className="flex items-center gap-1.5">
+      {/* Calque cliquable couvrant la carte → ouvre l'éditeur. Posé sous le
+          contenu (z-0) ; le contenu est pointer-events-none pour laisser passer
+          les clics, sauf ses éléments interactifs (liens, iframe YouTube) qui
+          ne pourraient pas vivre dans un <button>. */}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`Modifier le bloc ${block.title}`}
+        className="absolute inset-0 z-0 rounded"
+      />
+      <div className="pointer-events-none relative z-10 flex items-start justify-between gap-1">
+        <div className="flex min-w-0 items-center gap-1.5">
           <span className={`h-2 w-2 shrink-0 rounded-full ${cls.dot}`} />
           <span className="line-clamp-1 font-medium text-xs">{block.title}</span>
         </div>
-        <div className="flex shrink-0 gap-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
-          <span
-            onClick={canMoveUp ? onMoveUp : undefined}
-            onKeyDown={(e) => {
-              if (!canMoveUp) return
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onMoveUp(e as unknown as React.MouseEvent)
-              }
-            }}
-            role="button"
-            tabIndex={canMoveUp ? 0 : -1}
+        <div className="pointer-events-auto flex shrink-0 gap-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
             aria-label="Monter"
             className={`flex h-4 w-4 items-center justify-center rounded ${
               canMoveUp ? 'hover:bg-foreground/10' : 'cursor-default opacity-30'
             }`}
           >
             <ArrowUp className="h-3 w-3" />
-          </span>
-          <span
-            onClick={canMoveDown ? onMoveDown : undefined}
-            onKeyDown={(e) => {
-              if (!canMoveDown) return
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onMoveDown(e as unknown as React.MouseEvent)
-              }
-            }}
-            role="button"
-            tabIndex={canMoveDown ? 0 : -1}
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
             aria-label="Descendre"
             className={`flex h-4 w-4 items-center justify-center rounded ${
               canMoveDown ? 'hover:bg-foreground/10' : 'cursor-default opacity-30'
             }`}
           >
             <ArrowDown className="h-3 w-3" />
-          </span>
+          </button>
         </div>
       </div>
-      {preview ? (
-        <p className="line-clamp-3 whitespace-pre-wrap text-[11px] text-muted-foreground leading-snug">{preview}</p>
+      {hasContent ? (
+        <div className="pointer-events-none relative z-10 [&_a]:pointer-events-auto [&_iframe]:pointer-events-auto">
+          <MarkdownPreview source={block.contentMarkdown} compact />
+        </div>
       ) : null}
-    </button>
+    </div>
   )
-}
-
-/** Convert markdown to a plain-text preview suitable for tight cards. */
-function stripMarkdown(s: string): string {
-  return s
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
-    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
-    .replace(/^#+\s*/gm, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
-    .replace(/^\s*[-*+]\s+/gm, '• ')
-    .replace(/^\s*\d+\.\s+/gm, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
 }
