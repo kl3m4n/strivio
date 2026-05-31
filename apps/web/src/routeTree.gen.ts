@@ -13,10 +13,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
-import { Route as DashboardProgramsProgramIdRouteImport } from './routes/dashboard/programs.$programId'
+import { Route as DashboardProgramsSlugRouteImport } from './routes/dashboard/programs.$slug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as DashboardProgramsProgramIdIndexRouteImport } from './routes/dashboard/programs.$programId.index'
-import { Route as DashboardProgramsProgramIdSettingsRouteImport } from './routes/dashboard/programs.$programId.settings'
+import { Route as DashboardProgramsSlugIndexRouteImport } from './routes/dashboard/programs.$slug.index'
+import { Route as DashboardProgramsSlugSettingsRouteImport } from './routes/dashboard/programs.$slug.settings'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -38,28 +38,27 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardProgramsProgramIdRoute =
-  DashboardProgramsProgramIdRouteImport.update({
-    id: '/programs/$programId',
-    path: '/programs/$programId',
-    getParentRoute: () => DashboardRoute,
-  } as any)
+const DashboardProgramsSlugRoute = DashboardProgramsSlugRouteImport.update({
+  id: '/programs/$slug',
+  path: '/programs/$slug',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardProgramsProgramIdIndexRoute =
-  DashboardProgramsProgramIdIndexRouteImport.update({
+const DashboardProgramsSlugIndexRoute =
+  DashboardProgramsSlugIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => DashboardProgramsProgramIdRoute,
+    getParentRoute: () => DashboardProgramsSlugRoute,
   } as any)
-const DashboardProgramsProgramIdSettingsRoute =
-  DashboardProgramsProgramIdSettingsRouteImport.update({
+const DashboardProgramsSlugSettingsRoute =
+  DashboardProgramsSlugSettingsRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => DashboardProgramsProgramIdRoute,
+    getParentRoute: () => DashboardProgramsSlugRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -68,17 +67,17 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/dashboard/programs/$programId': typeof DashboardProgramsProgramIdRouteWithChildren
-  '/dashboard/programs/$programId/settings': typeof DashboardProgramsProgramIdSettingsRoute
-  '/dashboard/programs/$programId/': typeof DashboardProgramsProgramIdIndexRoute
+  '/dashboard/programs/$slug': typeof DashboardProgramsSlugRouteWithChildren
+  '/dashboard/programs/$slug/settings': typeof DashboardProgramsSlugSettingsRoute
+  '/dashboard/programs/$slug/': typeof DashboardProgramsSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/dashboard/programs/$programId/settings': typeof DashboardProgramsProgramIdSettingsRoute
-  '/dashboard/programs/$programId': typeof DashboardProgramsProgramIdIndexRoute
+  '/dashboard/programs/$slug/settings': typeof DashboardProgramsSlugSettingsRoute
+  '/dashboard/programs/$slug': typeof DashboardProgramsSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,9 +86,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/dashboard/programs/$programId': typeof DashboardProgramsProgramIdRouteWithChildren
-  '/dashboard/programs/$programId/settings': typeof DashboardProgramsProgramIdSettingsRoute
-  '/dashboard/programs/$programId/': typeof DashboardProgramsProgramIdIndexRoute
+  '/dashboard/programs/$slug': typeof DashboardProgramsSlugRouteWithChildren
+  '/dashboard/programs/$slug/settings': typeof DashboardProgramsSlugSettingsRoute
+  '/dashboard/programs/$slug/': typeof DashboardProgramsSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,17 +98,17 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/'
     | '/api/auth/$'
-    | '/dashboard/programs/$programId'
-    | '/dashboard/programs/$programId/settings'
-    | '/dashboard/programs/$programId/'
+    | '/dashboard/programs/$slug'
+    | '/dashboard/programs/$slug/settings'
+    | '/dashboard/programs/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/dashboard'
     | '/api/auth/$'
-    | '/dashboard/programs/$programId/settings'
-    | '/dashboard/programs/$programId'
+    | '/dashboard/programs/$slug/settings'
+    | '/dashboard/programs/$slug'
   id:
     | '__root__'
     | '/'
@@ -117,9 +116,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard/'
     | '/api/auth/$'
-    | '/dashboard/programs/$programId'
-    | '/dashboard/programs/$programId/settings'
-    | '/dashboard/programs/$programId/'
+    | '/dashboard/programs/$slug'
+    | '/dashboard/programs/$slug/settings'
+    | '/dashboard/programs/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -159,11 +158,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/programs/$programId': {
-      id: '/dashboard/programs/$programId'
-      path: '/programs/$programId'
-      fullPath: '/dashboard/programs/$programId'
-      preLoaderRoute: typeof DashboardProgramsProgramIdRouteImport
+    '/dashboard/programs/$slug': {
+      id: '/dashboard/programs/$slug'
+      path: '/programs/$slug'
+      fullPath: '/dashboard/programs/$slug'
+      preLoaderRoute: typeof DashboardProgramsSlugRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/api/auth/$': {
@@ -173,48 +172,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/programs/$programId/': {
-      id: '/dashboard/programs/$programId/'
+    '/dashboard/programs/$slug/': {
+      id: '/dashboard/programs/$slug/'
       path: '/'
-      fullPath: '/dashboard/programs/$programId/'
-      preLoaderRoute: typeof DashboardProgramsProgramIdIndexRouteImport
-      parentRoute: typeof DashboardProgramsProgramIdRoute
+      fullPath: '/dashboard/programs/$slug/'
+      preLoaderRoute: typeof DashboardProgramsSlugIndexRouteImport
+      parentRoute: typeof DashboardProgramsSlugRoute
     }
-    '/dashboard/programs/$programId/settings': {
-      id: '/dashboard/programs/$programId/settings'
+    '/dashboard/programs/$slug/settings': {
+      id: '/dashboard/programs/$slug/settings'
       path: '/settings'
-      fullPath: '/dashboard/programs/$programId/settings'
-      preLoaderRoute: typeof DashboardProgramsProgramIdSettingsRouteImport
-      parentRoute: typeof DashboardProgramsProgramIdRoute
+      fullPath: '/dashboard/programs/$slug/settings'
+      preLoaderRoute: typeof DashboardProgramsSlugSettingsRouteImport
+      parentRoute: typeof DashboardProgramsSlugRoute
     }
   }
 }
 
-interface DashboardProgramsProgramIdRouteChildren {
-  DashboardProgramsProgramIdSettingsRoute: typeof DashboardProgramsProgramIdSettingsRoute
-  DashboardProgramsProgramIdIndexRoute: typeof DashboardProgramsProgramIdIndexRoute
+interface DashboardProgramsSlugRouteChildren {
+  DashboardProgramsSlugSettingsRoute: typeof DashboardProgramsSlugSettingsRoute
+  DashboardProgramsSlugIndexRoute: typeof DashboardProgramsSlugIndexRoute
 }
 
-const DashboardProgramsProgramIdRouteChildren: DashboardProgramsProgramIdRouteChildren =
-  {
-    DashboardProgramsProgramIdSettingsRoute:
-      DashboardProgramsProgramIdSettingsRoute,
-    DashboardProgramsProgramIdIndexRoute: DashboardProgramsProgramIdIndexRoute,
-  }
+const DashboardProgramsSlugRouteChildren: DashboardProgramsSlugRouteChildren = {
+  DashboardProgramsSlugSettingsRoute: DashboardProgramsSlugSettingsRoute,
+  DashboardProgramsSlugIndexRoute: DashboardProgramsSlugIndexRoute,
+}
 
-const DashboardProgramsProgramIdRouteWithChildren =
-  DashboardProgramsProgramIdRoute._addFileChildren(
-    DashboardProgramsProgramIdRouteChildren,
+const DashboardProgramsSlugRouteWithChildren =
+  DashboardProgramsSlugRoute._addFileChildren(
+    DashboardProgramsSlugRouteChildren,
   )
 
 interface DashboardRouteChildren {
   DashboardIndexRoute: typeof DashboardIndexRoute
-  DashboardProgramsProgramIdRoute: typeof DashboardProgramsProgramIdRouteWithChildren
+  DashboardProgramsSlugRoute: typeof DashboardProgramsSlugRouteWithChildren
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardIndexRoute: DashboardIndexRoute,
-  DashboardProgramsProgramIdRoute: DashboardProgramsProgramIdRouteWithChildren,
+  DashboardProgramsSlugRoute: DashboardProgramsSlugRouteWithChildren,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

@@ -10,11 +10,12 @@ import { BlockEditorDialog, type BlockEditorValue } from '@/components/dashboard
 import { type BlockPreview, CalendarWeek, type DayPreview } from '@/components/dashboard/calendar-week'
 import { DuplicateDayDialog } from '@/components/dashboard/duplicate-day-dialog'
 import { Button } from '@/components/ui/button'
+import type { ProgramContext } from './programs.$slug'
 
-export const Route = createFileRoute('/dashboard/programs/$programId/')({
-  loader: async ({ context, params }) => {
-    const programId = params.programId as Id<'programs'>
-    await context.queryClient.ensureQueryData(convexQuery(api.days.listForProgram, { programId }))
+export const Route = createFileRoute('/dashboard/programs/$slug/')({
+  loader: async ({ context }) => {
+    const { program } = context as unknown as ProgramContext
+    await context.queryClient.ensureQueryData(convexQuery(api.days.listForProgram, { programId: program._id }))
   },
   component: ProgramCalendarPage,
 })
@@ -25,9 +26,8 @@ type EditorState =
   | { kind: 'edit'; block: BlockPreview; day: DayPreview }
 
 function ProgramCalendarPage() {
-  const params = Route.useParams()
-  const programId = params.programId as Id<'programs'>
-  const { data: program } = useSuspenseQuery(convexQuery(api.programs.getById, { programId }))
+  const { program } = Route.useRouteContext() as unknown as ProgramContext
+  const programId = program._id
   const { data: days } = useSuspenseQuery(convexQuery(api.days.listForProgram, { programId }))
 
   const upsertDay = useMutation({ mutationFn: useConvexMutation(api.days.upsert) })
@@ -119,7 +119,7 @@ function ProgramCalendarPage() {
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link to="/dashboard/programs/$programId/settings" params={{ programId }}>
+          <Link to="/dashboard/programs/$slug/settings" params={{ slug: program.slug }}>
             <Settings className="-ml-1 h-4 w-4" /> Paramètres
           </Link>
         </Button>

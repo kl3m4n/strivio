@@ -95,6 +95,37 @@ export const getById = query({
   },
 })
 
+/**
+ * Resolve a program by its slug WITHIN an organization (slug is unique per
+ * org). Returns null if not found so the web can redirect instead of erroring.
+ * Used by the `/dashboard/programs/$slug` routes.
+ */
+export const getBySlug = query({
+  args: { organizationId: v.id('organizations'), slug: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      _id: v.id('programs'),
+      _creationTime: v.number(),
+      organizationId: v.id('organizations'),
+      slug: v.string(),
+      name: v.string(),
+      description: v.string(),
+      priceCents: v.number(),
+      currency: v.string(),
+      isPublished: v.boolean(),
+      createdAt: v.number(),
+    }),
+  ),
+  handler: async (ctx, { organizationId, slug }) => {
+    await requireOrgMember(ctx, organizationId)
+    return await ctx.db
+      .query('programs')
+      .withIndex('by_org_slug', (q) => q.eq('organizationId', organizationId).eq('slug', slug))
+      .unique()
+  },
+})
+
 // --- Mutations -----------------------------------------------------------
 
 export const create = mutation({
@@ -106,12 +137,13 @@ export const create = mutation({
     priceCents: v.optional(v.number()),
     currency: v.optional(v.string()),
   },
-  returns: v.id('programs'),
+  // Renvoie le slug (et non l'id) : c'est lui qui sert d'identifiant d'URL.
+  returns: v.string(),
   handler: async (ctx, args) => {
     await requireOrgMember(ctx, args.organizationId)
     const slug = args.slug?.trim() || slugify(args.name)
     await ensureSlugFreeInOrg(ctx, args.organizationId, slug)
-    return await ctx.db.insert('programs', {
+    await ctx.db.insert('programs', {
       organizationId: args.organizationId,
       slug,
       name: args.name,
@@ -121,6 +153,7 @@ export const create = mutation({
       isPublished: false,
       createdAt: Date.now(),
     })
+    return slug
   },
 })
 

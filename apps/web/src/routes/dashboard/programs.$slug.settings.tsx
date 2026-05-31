@@ -1,8 +1,7 @@
-import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
+import { useConvexMutation } from '@convex-dev/react-query'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { api } from '@strivio/backend/api'
-import type { Id } from '@strivio/backend/dataModel'
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -12,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import type { ProgramContext } from './programs.$slug'
 
 const schema = z.object({
   name: z.string().min(2, '2 caractères minimum'),
@@ -28,19 +28,14 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>
 
-export const Route = createFileRoute('/dashboard/programs/$programId/settings')({
-  loader: async ({ context, params }) => {
-    const programId = params.programId as Id<'programs'>
-    await context.queryClient.ensureQueryData(convexQuery(api.programs.getById, { programId }))
-  },
+export const Route = createFileRoute('/dashboard/programs/$slug/settings')({
   component: ProgramSettingsPage,
 })
 
 function ProgramSettingsPage() {
-  const params = Route.useParams()
-  const programId = params.programId as Id<'programs'>
+  const { program } = Route.useRouteContext() as unknown as ProgramContext
+  const programId = program._id
   const navigate = useNavigate()
-  const { data: program } = useSuspenseQuery(convexQuery(api.programs.getById, { programId }))
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -69,6 +64,11 @@ function ProgramSettingsPage() {
         isPublished: values.isPublished,
       })
       toast.success('Programme mis à jour')
+      // Le slug fait partie de l'URL : s'il change, on suit la nouvelle URL
+      // (sinon le slug courant ne résoudrait plus).
+      if (values.slug !== program.slug) {
+        void navigate({ to: '/dashboard/programs/$slug/settings', params: { slug: values.slug } })
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Erreur')
     }
@@ -90,8 +90,8 @@ function ProgramSettingsPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-8">
       <Link
-        to="/dashboard/programs/$programId"
-        params={{ programId }}
+        to="/dashboard/programs/$slug"
+        params={{ slug: program.slug }}
         className="text-muted-foreground text-sm hover:underline"
       >
         ← {program.name}
@@ -127,7 +127,7 @@ function ProgramSettingsPage() {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormDescription>identifiant dans l'URL publique (unique dans ton org)</FormDescription>
+                    <FormDescription>identifiant dans l'URL (unique dans ton org)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

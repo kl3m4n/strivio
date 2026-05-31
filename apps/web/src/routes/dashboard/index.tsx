@@ -58,8 +58,8 @@ function ProgramsIndex() {
           {programs.map((p) => (
             <Link
               key={p._id}
-              to="/dashboard/programs/$programId"
-              params={{ programId: p._id }}
+              to="/dashboard/programs/$slug"
+              params={{ slug: p.slug }}
               className="block transition hover:opacity-90"
             >
               <Card className="h-full">

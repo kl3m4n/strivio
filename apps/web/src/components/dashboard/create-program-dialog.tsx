@@ -52,7 +52,7 @@ export function CreateProgramDialog({
 
   const onSubmit = async (values: Values) => {
     try {
-      const programId = await createProgram.mutateAsync({
+      const slug = await createProgram.mutateAsync({
         organizationId,
         name: values.name,
         slug: values.slug?.trim() ? values.slug.trim() : undefined,
@@ -60,7 +60,7 @@ export function CreateProgramDialog({
       toast.success(`Programme créé : ${values.name}`)
       setOpen(false)
       form.reset()
-      void navigate({ to: '/dashboard/programs/$programId', params: { programId } })
+      void navigate({ to: '/dashboard/programs/$slug', params: { slug } })
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Erreur inconnue'
       toast.error(msg)
